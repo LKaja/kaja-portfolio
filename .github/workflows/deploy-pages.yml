@@ -1,0 +1,56 @@
+name: Deploy Kaja Portfolio to GitHub Pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare static site
+        run: |
+          mkdir -p _site/assets
+          cp -r site/. _site/
+          touch _site/.nojekyll
+          python3 - <<'PY'
+          from urllib.request import urlretrieve
+          from urllib.parse import quote
+          from pathlib import Path
+          base = "https://kaja-visual-portfolio.mishiseisjuan.chatgpt.site/assets/"
+          files = [
+            "跨越边界的勇气.png",
+            "选择的道路.png",
+            "时间的流逝.png",
+            "关注的视界.png",
+            "跨越边界的沉思.png",
+            "ppt-real-5.png",
+            "ppt-real-7.png",
+            "32ae1813d03648f1d49ae93d2bc9f817.mp4",
+            "《洛神图》三维东方幻想PV创作.mp4",
+          ]
+          out = Path("_site/assets")
+          for name in files:
+              print("Downloading", name)
+              urlretrieve(base + quote(name), out / name)
+          urlretrieve("https://kaja-visual-portfolio.mishiseisjuan.chatgpt.site/favicon.svg", "_site/favicon.svg")
+          PY
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
