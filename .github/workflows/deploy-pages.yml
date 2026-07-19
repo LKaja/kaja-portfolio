@@ -24,7 +24,7 @@ jobs:
           cp -r site/. _site/
           touch _site/.nojekyll
           python3 - <<'PY'
-          from urllib.request import urlretrieve
+          from urllib.request import Request, urlopen
           from urllib.parse import quote
           from pathlib import Path
           base = "https://kaja-visual-portfolio.mishiseisjuan.chatgpt.site/assets/"
@@ -39,11 +39,14 @@ jobs:
             "32ae1813d03648f1d49ae93d2bc9f817.mp4",
             "《洛神图》三维东方幻想PV创作.mp4",
           ]
+          headers = {"User-Agent": "Mozilla/5.0"}
           out = Path("_site/assets")
           for name in files:
               print("Downloading", name)
-              urlretrieve(base + quote(name), out / name)
-          urlretrieve("https://kaja-visual-portfolio.mishiseisjuan.chatgpt.site/favicon.svg", "_site/favicon.svg")
+              req = Request(base + quote(name), headers=headers)
+              (out / name).write_bytes(urlopen(req).read())
+          req = Request("https://kaja-visual-portfolio.mishiseisjuan.chatgpt.site/favicon.svg", headers=headers)
+          Path("_site/favicon.svg").write_bytes(urlopen(req).read())
           PY
       - uses: actions/configure-pages@v5
         with:
